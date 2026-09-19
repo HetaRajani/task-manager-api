@@ -1,9 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ==========================================
+// VIVA TOPIC: CORS (Cross-Origin Resource Sharing)
+// ==========================================
+// Browsers enforce the Same-Origin Policy (SOP) for security. An origin is defined
+// by the protocol, domain, and port (e.g., http://localhost:5173 vs http://localhost:5000).
+// Because the React frontend (port 5173) and Express backend (port 5000) have different ports,
+// they are considered different origins. Without CORS headers, the browser will block the
+// frontend from reading responses from the backend.
+// The `cors` middleware sets the appropriate HTTP headers (like `Access-Control-Allow-Origin: *`
+// and handles preflight OPTIONS requests) so our React client can make requests safely.
+app.use(cors());
 app.use(express.json());
 
 // ---- Request logging middleware (applied globally) ----
@@ -57,6 +69,19 @@ app.get('/tasks/:id', validateIdParam, async (req, res, next) => {
     next(err);
   }
 });
+
+// ==========================================
+// VIVA TOPIC: State Synchronization After Writes
+// ==========================================
+// The backend is the single source of truth.
+// When a task is created or updated, Mongoose:
+//   1. Generates an immutable `_id` and timestamp `createdAt`.
+//   2. Applies schema defaults (e.g., completed: false, priority: 'medium').
+//   3. Runs pre-save hooks (e.g., trimming title whitespace).
+//   4. Runs schema validators (when `runValidators: true`).
+// The route responds with the resulting document from the database (201 or 200).
+// The frontend must update its state directly with this returned object, NOT by assumption,
+// guaranteeing that client state strictly mirrors the database.
 
 // POST /tasks - create a task
 app.post('/tasks', async (req, res, next) => {

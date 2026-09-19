@@ -36,6 +36,13 @@ function requireJsonContentType(req, res, next) {
 app.use(requireJsonContentType);
 
 const Task = require('./models/Task');
+const auth = require('./middleware/auth');
+const { validateTask } = require('./middleware/validate');
+const authRoutes = require('./routes/auth');
+
+// ---- Auth Routes ----
+app.use('/auth', authRoutes);
+app.use(authRoutes);
 
 // ---- Route-specific middleware: validate Mongo ObjectId ----
 function validateIdParam(req, res, next) {
@@ -46,6 +53,9 @@ function validateIdParam(req, res, next) {
   req.taskId = id;
   next();
 }
+
+// ---- Protect all /tasks routes with JWT authentication middleware ----
+app.use('/tasks', auth);
 
 // ---- CRUD Routes using Mongoose ----
 
@@ -84,7 +94,7 @@ app.get('/tasks/:id', validateIdParam, async (req, res, next) => {
 // guaranteeing that client state strictly mirrors the database.
 
 // POST /tasks - create a task
-app.post('/tasks', async (req, res, next) => {
+app.post('/tasks', validateTask, async (req, res, next) => {
   try {
     const created = await Task.create(req.body);
     res.status(201).json(created);
@@ -94,7 +104,7 @@ app.post('/tasks', async (req, res, next) => {
 });
 
 // PUT /tasks/:id - update a task
-app.put('/tasks/:id', validateIdParam, async (req, res, next) => {
+app.put('/tasks/:id', validateIdParam, validateTask, async (req, res, next) => {
   try {
     const updated = await Task.findByIdAndUpdate(req.taskId, req.body, {
       new: true,

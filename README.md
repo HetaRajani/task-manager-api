@@ -69,3 +69,6 @@ The API server runs on `http://localhost:5000`.
 
 This backend serves the React + Vite frontend located in the [portfolio repo](../portfolio).
 For the full application experience, make sure this backend is running on `http://localhost:5000` before starting the frontend dev server.
+
+## Frontend
+The React frontend (Tasks page) lives in https://github.com/HetaRajani/portfolio- on the `practical-6` branch. CORS is enabled so it can call this API from localhost:5173.
